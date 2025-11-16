@@ -28,7 +28,7 @@ def save_upload(db: Session, upload_file: UploadFile, owner_id: int):
 
         db_file = File(
             name=filename,
-            ownerID=owner_id,
+            owner_id=owner_id,
             content_type=upload_file.content_type,
             path=file_path
         )
