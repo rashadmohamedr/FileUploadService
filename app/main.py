@@ -1,0 +1,15 @@
+from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from app.db.database import init_db
+from app.routers import file_router
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # startup: initialize DB (or run other startup tasks)
+    init_db()
+    yield
+    # shutdown: add cleanup here if needed
+
+app = FastAPI(lifespan=lifespan)
+
+app.include_router(file_router.router)
