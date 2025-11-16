@@ -1,3 +1,6 @@
 uploads/0ed86255-f234-4973-976f-3ff2cace907e.jpg
 uploads/df1efe76-0ccb-4ef9-88f3-e665570d890d.jpg
 uploads/05fc7575-51c6-4730-a142-e5e6a945e733.jpg
+files.db
+app/models/__pycache__/file.cpython-313.pyc
+.gitignore
