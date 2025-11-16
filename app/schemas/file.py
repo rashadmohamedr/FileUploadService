@@ -3,7 +3,7 @@ from datetime import datetime
 
 class FileBase(BaseModel):
     id: int
-    ownerID: int
+    owner_id: int
     name: str
     content_type: str | None = None
     path: str
