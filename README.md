@@ -237,95 +237,109 @@ FileUploadService/
 
 ## 🚧 Roadmap
 
-### ✅ Completed Features
-- [x] User registration and authentication
-- [x] JWT token generation and validation
-- [x] Protected file routes with authentication middleware
-- [x] User ownership verification for file operations
-- [x] Database models with proper foreign key relationships
-- [x] Schema consistency (snake_case naming)
-- [x] Basic file upload/download/delete functionality
+### ✅ Completed Features (`main`)
+- User registration and authentication
+- JWT token generation and validation
+- Protected file routes with authentication middleware
+- User ownership verification for file operations
+- Database models with proper foreign key relationships
+- Schema consistency (snake_case naming)
+- Basic file upload/download/delete functionality
 
-### 🔄 In Progress (Current Sprint)
-- [ ] **File Security & Validation** (feature/file-security-validation branch)
-  - [ ] File size limits and validation
-  - [ ] File type/extension whitelisting and blacklisting
-  - [ ] Filename sanitization (prevent directory traversal)
-  - [ ] Magic number validation (content type verification)
-  - [ ] Optional virus scanning with ClamAV integration
-  - [ ] Enhanced ownership checks in all endpoints
+### 🔄 In Progress (Current Sprint) (`feature/file-security-validation`)
+- **File Security & Validation**
+  - File size limits and validation
+  - File type/extension whitelisting and blacklisting
+  - Filename sanitization (prevent directory traversal)
+  - Magic number validation (content type verification)
+  - Optional virus scanning with ClamAV integration
+  - Enhanced ownership checks in all endpoints
 
 ### 📋 Planned Features
 
-#### High Priority
-- [ ] **Enhanced Error Handling & Logging**
-  - [ ] Replace generic exception handlers with specific error types
-  - [ ] Add structured logging (JSON format)
-  - [ ] Implement proper database rollback mechanisms
-  - [ ] Consistent error response formats across all endpoints
-  - [ ] Request ID tracking for debugging
+#### High Priority (`feature/enhanced-error-handling`)
+- **Enhanced Error Handling & Logging**
+  - Replace generic exception handlers with specific error types
+  - Add structured logging (JSON format)
+  - Implement proper database rollback mechanisms
+  - Consistent error response formats across all endpoints
+  - Request ID tracking for debugging
 
-- [ ] **Production-Ready Features**
-  - [ ] Create `.env.example` template
-  - [ ] CORS configuration in `main.py`
-  - [ ] Health check endpoint (`/health`)
-  - [ ] API versioning (e.g., `/api/v1/`)
-  - [ ] Request rate limiting (prevent abuse)
-  - [ ] Database migrations with Alembic
-  - [ ] Fix `requirments.txt` → `requirements.txt` typo
+- **Production-Ready Features** (`feature/production-ready`)
+  - Create `.env.example` template
+  - CORS configuration in `main.py`
+  - Health check endpoint (`/health`)
+  - API versioning (e.g., `/api/v1/`)
+  - Request rate limiting (prevent abuse)
+  - Database migrations with Alembic
+  - Fix `requirments.txt` → `requirements.txt` typo
 
-- [ ] **Docker & Deployment Improvements**
-  - [ ] Add PostgreSQL to `docker-compose.yaml`
-  - [ ] Multi-stage Docker builds (smaller images)
-  - [ ] Container health checks
-  - [ ] Volume persistence for database and uploads
-  - [ ] Environment-specific configurations (dev/staging/prod)
+- **Docker & Deployment Improvements** (`feature/docker-deployment`)
+  - Add PostgreSQL to `docker-compose.yaml`
+  - Multi-stage Docker builds (smaller images)
+  - Container health checks
+  - Volume persistence for database and uploads
+  - Environment-specific configurations (dev/staging/prod)
 
-#### Medium Priority
-- [ ] **Testing & Documentation**
-  - [ ] Unit tests with pytest
-  - [ ] Integration tests for API endpoints
-  - [ ] Test coverage reporting
-  - [ ] Enhanced OpenAPI documentation with examples
-  - [ ] Postman/Insomnia collection
+#### Medium Priority (`feature/testing-and-docs`)
+- **Testing & Documentation**
+  - Unit tests with pytest
+  - Integration tests for API endpoints
+  - Test coverage reporting
+  - Enhanced OpenAPI documentation with examples
+  - Postman/Insomnia collection
 
-- [ ] **Admin Dashboard**
-  - [ ] User management (list, disable, delete users)
-  - [ ] File analytics (storage usage, upload trends)
-  - [ ] Storage metrics and monitoring
-  - [ ] Role-based access control (RBAC)
-  - [ ] Audit logging
+- **Admin Dashboard** (`feature/admin-dashboard`)
+  - User management (list, disable, delete users)
+  - File analytics (storage usage, upload trends)
+  - Storage metrics and monitoring
+  - Role-based access control (RBAC)
+  - Audit logging
 
-- [ ] **User Features**
-  - [ ] User profile management endpoints
-  - [ ] Password reset functionality
-  - [ ] Email verification for new accounts
-  - [ ] Account deletion (with cascading file cleanup)
+- **User Features** (`feature/user-features`)
+  - User profile management endpoints
+  - Password reset functionality
+  - Email verification for new accounts
+  - Account deletion (with cascading file cleanup)
 
-#### Future Enhancements
-- [ ] **Scalability & Performance**
-  - [ ] Migrate from SQLite to PostgreSQL for production
-  - [ ] Cloud storage integration (AWS S3, Azure Blob, Google Cloud Storage)
-  - [ ] Signed URLs for secure downloads
-  - [ ] CDN integration for file delivery
-  - [ ] Database connection pooling
-  - [ ] Redis caching layer
+#### New Features
 
-- [ ] **Advanced File Features**
-  - [ ] File sharing between users
-  - [ ] File versioning and history
-  - [ ] Thumbnail generation for images
-  - [ ] Bulk file operations
-  - [ ] ZIP archive download for multiple files
-  - [ ] File search and filtering
-  - [ ] Metadata extraction and indexing
+- **Analytics Dashboard API** (`feature/analytics-dashboard`)
+  - Receive data from clients
+  - Store it in PostgreSQL
+  - Serve aggregated stats with caching (Redis)
+  - Tests with pytest
 
-- [ ] **Monitoring & Observability**
-  - [ ] Prometheus metrics export
-  - [ ] Grafana dashboards
-  - [ ] APM integration (DataDog, New Relic, or similar)
-  - [ ] Error tracking (Sentry)
-  - [ ] Uptime monitoring
+- **API Gateway** (`feature/api-gateway`)
+  - Combine multiple microservices (auth, payments, file logic)
+  - Implement rate limiting
+  - API key management for external clients
+
+### Future Enhancements
+
+#### Scalability & Performance (`feature/scalability`)
+- Migrate from SQLite to PostgreSQL for production
+- Cloud storage integration (AWS S3, Azure Blob, Google Cloud Storage)
+- Signed URLs for secure downloads
+- CDN integration for file delivery
+- Database connection pooling
+- Redis caching layer
+
+#### Advanced File Features (`feature/advanced-file-features`)
+- File sharing between users
+- File versioning and history
+- Thumbnail generation for images
+- Bulk file operations
+- ZIP archive download for multiple files
+- File search and filtering
+- Metadata extraction and indexing
+
+#### Monitoring & Observability (`feature/monitoring`)
+- Prometheus metrics export
+- Grafana dashboards
+- APM integration (DataDog, New Relic, or similar)
+- Error tracking (Sentry)
+- Uptime monitoring
 
 ### 🤔 Under Consideration
 - WebSocket support for real-time upload progress
