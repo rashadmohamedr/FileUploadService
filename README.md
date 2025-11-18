@@ -8,36 +8,39 @@ A production-ready RESTful API built with FastAPI for secure file upload, manage
   - User registration with email validation
   - Secure login system
   - Password hashing using bcrypt
-  - JWT token-based authentication (ready for implementation)
+  - JWT token-based authentication with access tokens
+  - Protected endpoints with user authentication
 
 - **File Management**
   - Upload files with automatic UUID-based naming
-  - Download files by ID
-  - List all files with pagination
-  - Delete files (removes from both disk and database)
+  - Download files by ID with ownership verification
+  - List user's own files
+  - Delete files with ownership checks (removes from both disk and database)
   - Content type detection and preservation
-  - File ownership tracking
+  - File ownership tracking and authorization
 
 - **Security**
+  - JWT token authentication and authorization
   - Password hashing with bcrypt
   - SQL injection protection via SQLAlchemy ORM
   - Environment-based configuration
   - Secure file path handling
+  - User ownership verification for all file operations
 
 - **Database**
   - SQLAlchemy ORM with SQLite (easily switchable to PostgreSQL/MySQL)
   - Automatic database initialization
-  - Relational data model (Users ↔ Files)
+  - Relational data model with proper foreign keys (Users ↔ Files)
 
 ## 🛠️ Tech Stack
 
 - **Framework**: FastAPI
-- **Database**: SQLAlchemy (SQLite default, configurable)
-- **Authentication**: Passlib with bcrypt
+- **Database**: SQLAlchemy (SQLite default, PostgreSQL recommended for production)
+- **Authentication**: JWT (JSON Web Tokens) with Passlib/bcrypt
 - **Validation**: Pydantic v2
 - **Server**: Uvicorn
 - **Containerization**: Docker & Docker Compose
-- **File Processing**: Pillow
+- **File Processing**: Pillow, python-magic (optional)
 
 ## 📋 Prerequisites
 
@@ -103,25 +106,25 @@ Once the server is running, visit:
 
 ### Authentication
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/auth/signup` | Register a new user |
-| POST | `/auth/login` | Login with email and password |
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/auth/signup` | Register a new user | No |
+| POST | `/auth/login` | Login and receive JWT token | No |
 
-### File Operations
+### File Operations (All require authentication)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/file/upload` | Upload a new file |
-| GET | `/file/download/{file_id}` | Download a file by ID |
-| GET | `/file/` | List all files (with pagination) |
-| DELETE | `/file/{file_id}` | Delete a file |
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/files/upload` | Upload a new file | Yes |
+| GET | `/files/{file_id}/download` | Download your file by ID | Yes |
+| GET | `/files/` | List all your files | Yes |
+| DELETE | `/files/{file_id}` | Delete your file | Yes |
 
 ### Admin (Placeholder)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/admin/dashboard` | Admin dashboard endpoint |
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/admin/dashboard` | Admin dashboard endpoint | Yes (Admin) |
 
 ## 📝 Usage Examples
 
@@ -148,31 +151,42 @@ curl -X POST "http://localhost:8000/auth/login" \
   }'
 ```
 
-### Upload a File
+Response:
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer"
+}
+```
+
+### Upload a File (with authentication)
 
 ```bash
-curl -X POST "http://localhost:8000/file/upload" \
-  -F "file=@/path/to/your/file.pdf" \
-  -F "owner_id=1"
+curl -X POST "http://localhost:8000/files/upload" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -F "file=@/path/to/your/file.pdf"
 ```
 
 ### Download a File
 
 ```bash
-curl -X GET "http://localhost:8000/file/download/1" \
+curl -X GET "http://localhost:8000/files/1/download" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   --output downloaded_file.pdf
 ```
 
-### List Files
+### List Your Files
 
 ```bash
-curl -X GET "http://localhost:8000/file/?skip=0&limit=10"
+curl -X GET "http://localhost:8000/files/" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
 ### Delete a File
 
 ```bash
-curl -X DELETE "http://localhost:8000/file/1"
+curl -X DELETE "http://localhost:8000/files/1" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
 ## 🏗️ Project Structure
@@ -182,27 +196,29 @@ FileUploadService/
 ├── app/
 │   ├── core/                 # Core functionality
 │   │   ├── config.py         # Configuration settings
-│   │   └── security.py       # Password hashing utilities
+│   │   ├── security.py       # Password hashing & JWT utilities
+│   │   └── validators.py     # File validation (planned)
 │   ├── db/                   # Database configuration
 │   │   └── database.py       # SQLAlchemy setup
 │   ├── models/               # SQLAlchemy models
 │   │   ├── user.py           # User model
-│   │   └── file.py           # File model
+│   │   └── file.py           # File model with foreign keys
 │   ├── schemas/              # Pydantic schemas
 │   │   ├── user.py           # User schemas
 │   │   └── file.py           # File schemas
 │   ├── routers/              # API endpoints
 │   │   ├── auth_router.py    # Authentication routes
-│   │   └── file_router.py    # File management routes
+│   │   └── file_router.py    # File management routes (protected)
 │   ├── services/             # Business logic
-│   │   ├── auth_service.py   # Authentication service
+│   │   ├── auth_service.py   # Authentication & JWT service
 │   │   └── file_service.py   # File handling service
 │   ├── internal/             # Internal/admin routes
-│   │   └── admin.py          # Admin endpoints
-│   ├── dependencies.py       # Dependency injection
+│   │   └── admin.py          # Admin endpoints (planned)
+│   ├── dependencies.py       # JWT validation & user injection
 │   └── main.py               # Application entry point
 ├── uploads/                  # Uploaded files storage
 ├── .env                      # Environment variables
+├── .env.example              # Environment variables template (planned)
 ├── docker-compose.yaml       # Docker Compose configuration
 ├── Dockerfile                # Docker image definition
 ├── requirements.txt          # Python dependencies
@@ -211,29 +227,134 @@ FileUploadService/
 
 ## 🔐 Security Considerations
 
+- **JWT Authentication**: All file operations require valid JWT tokens
 - **Password Storage**: Passwords are hashed using bcrypt before storage
+- **File Ownership**: Users can only access/modify their own files
 - **File Storage**: Files are saved with UUID-based names to prevent path traversal attacks
 - **Environment Variables**: Sensitive configuration is stored in `.env` file (not committed to git)
 - **SQL Injection Protection**: SQLAlchemy ORM prevents SQL injection
 - **Input Validation**: Pydantic validates all input data
 
-**Note**: JWT token authentication is configured but not yet implemented in the auth endpoints. The token fields in responses are currently empty placeholders.
-
 ## 🚧 Roadmap
 
-- [ ] Implement JWT token generation and validation
-- [ ] Add protected routes with authentication middleware
-- [ ] Implement file size limits
-- [ ] Add file type restrictions
-- [ ] User profile management endpoints
-- [ ] File sharing between users
-- [ ] Admin dashboard functionality
-- [ ] Database migration support (Alembic)
-- [ ] Unit and integration tests
-- [ ] PostgreSQL support
-- [ ] S3/Cloud storage integration
-- [ ] File versioning
-- [ ] Thumbnails for images
+### ✅ Completed Features (`main`)
+- User registration and authentication
+- JWT token generation and validation
+- Protected file routes with authentication middleware
+- User ownership verification for file operations
+- Database models with proper foreign key relationships
+- Schema consistency (snake_case naming)
+- Basic file upload/download/delete functionality
+
+### 🔄 In Progress (Current Sprint) (`feature/file-security-validation`)
+- **File Security & Validation** <--
+  - File size limits and validation
+  - File type/extension whitelisting and blacklisting
+  - Filename sanitization (prevent directory traversal)
+  - Magic number validation (content type verification)
+  - Optional virus scanning with ClamAV integration
+  - Enhanced ownership checks in all endpoints
+
+### 📋 Planned Features
+
+#### High Priority (`feature/enhanced-error-handling`)
+- **New Features**
+  - Replace generic exception handlers with specific error types
+  - Add structured logging (JSON format)
+  - Request ID tracking for debugging
+
+- **Production-Ready Features** (`feature/production-ready`)
+  - Create `.env.example` template
+  - CORS configuration in `main.py`
+  - Health check endpoint (`/health`)
+  - API versioning (e.g., `/api/v1/`)
+  - Request rate limiting (prevent abuse)
+
+#### Medium Priority (`feature/testing-and-docs`)
+- **Testing & Documentation**
+  - Unit tests with pytest
+  - Integration tests for API endpoints
+  - Test coverage reporting
+  - Enhanced OpenAPI documentation with examples
+  - Postman/Insomnia collection
+
+- **Admin Dashboard** (`feature/admin-dashboard`)
+  - User management (list, disable, delete users)
+  - File analytics (storage usage, upload trends)
+  - Storage metrics and monitoring
+  - Role-based access control (RBAC)
+  - Audit logging
+
+- **User Features** (`feature/user-features`)
+  - User profile management endpoints
+  - Password reset functionality
+  - Email verification for new accounts
+  - Account deletion (with cascading file cleanup)
+
+#### New Features
+
+- **Analytics Dashboard API** (`feature/analytics-dashboard`)
+  - Receive data from clients
+  - Store it in PostgreSQL
+  - Serve aggregated stats with caching (Redis)
+  - Tests with pytest
+
+- **API Gateway** (`feature/api-gateway`)
+  - Combine multiple microservices (auth, payments, file logic)
+  - Implement rate limiting
+  - API key management for external clients
+
+### 🔧 Planned Code Fixes
+
+#### High Priority (`feature/enhanced-error-handling`)
+- **Code Fixes**
+  - Implement proper database rollback mechanisms
+  - Consistent error response formats across all endpoints
+
+- **Production-Ready Fixes** (`feature/production-ready`)
+  - Fix `requirments.txt` → `requirements.txt` typo
+  - Database migrations with Alembic
+
+- **Docker & Deployment Improvements** (`feature/docker-deployment`)
+  - Add PostgreSQL to `docker-compose.yaml`
+  - Multi-stage Docker builds (smaller images)
+  - Container health checks
+  - Volume persistence for database and uploads
+  - Environment-specific configurations (dev/staging/prod)
+
+### Future Enhancements
+
+#### Scalability & Performance (`feature/scalability`)
+- Migrate from SQLite to PostgreSQL for production
+- Cloud storage integration (AWS S3, Azure Blob, Google Cloud Storage)
+- Signed URLs for secure downloads
+- CDN integration for file delivery
+- Database connection pooling
+- Redis caching layer
+
+#### Advanced File Features (`feature/advanced-file-features`)
+- File sharing between users
+- File versioning and history
+- Thumbnail generation for images
+- Bulk file operations
+- ZIP archive download for multiple files
+- File search and filtering
+- Metadata extraction and indexing
+
+#### Monitoring & Observability (`feature/monitoring`)
+- Prometheus metrics export
+- Grafana dashboards
+- APM integration (DataDog, New Relic, or similar)
+- Error tracking (Sentry)
+- Uptime monitoring
+
+### 🤔 Under Consideration
+- WebSocket support for real-time upload progress
+- GraphQL API alongside REST
+- Multi-tenancy support (organizations/workspaces)
+- Client SDKs (Python, JavaScript, Go)
+- File encryption at rest
+- Compliance features (GDPR, data retention policies)
 
 ## 🤝 Contributing
 
@@ -246,8 +367,8 @@ This project is open source and available under the [MIT License](LICENSE).
 ## 👤 Author
 
 **Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)
+- GitHub: [@rashadmohamedr](https://github.com/rashadmohamedr)
+- LinkedIn: [LinkedIn](https://www.linkedin.com/in/rashad-mohamed-5ba667221)
 
 ## 🙏 Acknowledgments
 
@@ -257,4 +378,4 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ---
 
-**Note**: This is a portfolio project demonstrating backend development skills with FastAPI, SQLAlchemy, Docker, and RESTful API design principles.
+**Note**: This is a portfolio project demonstrating backend development skills with FastAPI, SQLAlchemy, Docker, JWT authentication, and RESTful API design principles.
