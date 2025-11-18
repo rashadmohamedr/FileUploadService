@@ -94,6 +94,15 @@ def save_upload(db: Session, upload_file: UploadFile, owner_id: int):
         db.add(db_file)
         db.commit()
         db.refresh(db_file)
+        
+        # TODO: (Analytics) Integrate event logging for all file operations.
+        # After successfully saving the file and creating the DB record:
+        # 1. Call analytics_service.log_event(
+        #    user_id=current_user.id,
+        #    event_type="file_upload",
+        #    metadata={"file_id": new_file.id, "size": file_size, "content_type": content_type}
+        # )
+        
         return db_file
         
     except HTTPException:
@@ -156,6 +165,15 @@ def delete_file(db: Session, file_id: int, owner_id: int)-> JSONResponse:
         # Delete database record
         db.delete(db_file)
         db.commit()
+        
+        # TODO: (Analytics) Integrate event logging for all file operations.
+        # After successfully deleting the file from disk and DB:
+        # 1. Call analytics_service.log_event(
+        #    user_id=current_user.id,
+        #    event_type="file_delete",
+        #    metadata={"file_id": file_id}
+        # )
+        
     except Exception as e:
         # TODO: In production, log this error for investigation
         # Example logging (not implemented yet):
@@ -203,8 +221,18 @@ def download_file(db: Session, file_id: int, owner_id: int) -> FileResponse:
     
     # Return file to user
     # FileResponse handles streaming, headers, and proper download behavior
-    return FileResponse(
+    response = FileResponse(
         path=str(db_file.path),
         filename=str(db_file.uploaded_name),  # Original filename user uploaded
         media_type=str(db_file.content_type) if db_file.content_type is not None else None
     )
+    
+    # TODO: (Analytics) Integrate event logging for all file operations.
+    # After successfully retrieving the file for download:
+    # 1. Call analytics_service.log_event(
+    #    user_id=current_user.id,
+    #    event_type="file_download",
+    #    metadata={"file_id": file.id}
+    # )
+    
+    return response

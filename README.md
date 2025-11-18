@@ -296,7 +296,7 @@ FileUploadService/
 - **Analytics Dashboard API** (`feature/analytics-dashboard`)
 
   1. **Data Collection**:
-    - Tracks events like file uploads, downloads, edits, and shares.
+    - Tracks events like file uploads and downloads.
     - Logs user activity, such as login times and actions performed.
 
   2. **Data Aggregation**:
