@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer,Float, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from app.db.database import Base
 from datetime import datetime
@@ -17,6 +17,6 @@ class File(Base):
     
     owner = relationship("User", back_populates="files")
 
-    # TODO: Add the following fields for analytics
-    # size = Column(Integer)  # File size in bytes
-    # content_type = Column(String)
+    # the following fields for analytics
+    size = Column(Float)  # File size in bytes
+    content_type = Column(String)

@@ -1,12 +1,12 @@
+import os
 from fastapi import APIRouter, Depends, UploadFile, HTTPException, status
 from sqlalchemy.orm import Session
-from fastapi.responses import FileResponse
-import os
-
-from app.dependencies import get_db
+from fastapi.responses import FileResponse,JSONResponse
+from app.dependencies import get_db, get_current_user
 from app.schemas.file import FileRead
 from app.services.file_service import save_upload, delete_file, download_file
 from app.models.file import File
+from app.models.user import User
 
 router = APIRouter(prefix="/file", tags=["file"])
 
@@ -26,8 +26,7 @@ router = APIRouter(prefix="/file", tags=["file"])
 # Example of what it should look like:
 # def upload(file: UploadFile, current_user: User = Depends(get_current_user), ...):
 #     db_file = save_upload(db, file, current_user.id)
-
-@router.post("/upload", response_model=FileRead, status_code=status.HTTP_201_CREATED)
+@router.post("/upload")
 def upload(
     file: UploadFile,
     owner_id: int = 1,  # Replace with current_user: User = Depends(get_current_user)
@@ -50,8 +49,7 @@ def upload(
     
     Or use Swagger UI at http://localhost:8000/docs
     """ 
-    db_file = save_upload(db, file, owner_id)
-    return db_file
+    return save_upload(db, file, owner_id)
 
 @router.get("/download/{file_id}", response_class=FileResponse)
 def download(
