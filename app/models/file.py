@@ -16,3 +16,7 @@ class File(Base):
     uploaded_at = Column(DateTime, default=datetime.utcnow)
     
     owner = relationship("User", back_populates="files")
+
+    # TODO: Add the following fields for analytics
+    # size = Column(Integer)  # File size in bytes
+    # content_type = Column(String)

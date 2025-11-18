@@ -14,3 +14,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.include_router(auth_router.router)
 app.include_router(file_router.router)
+
+# TODO: (Analytics) Import and register the analytics_router.
+# from .routers import analytics_router
+# app.include_router(analytics_router.router, prefix="/analytics", tags=["analytics"])

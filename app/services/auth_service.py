@@ -33,5 +33,16 @@ def authenticate_user(db: Session, user: UserLogin):
 
     return JSONResponse(content={"message": f"Welcome back, {db_user.username}!","token":token})
 
+# TODO: (Analytics) After successful login, log a "user_login" event and update the user's `last_login` timestamp.
+# This will involve calling the new analytics_service.
+
+def login_user():
+    # ... existing login logic ...
+    
+    # TODO: After successful authentication:
+    # 1. Update user's last_login timestamp in the database.
+    # 2. Call analytics_service.log_event(user_id=user.id, event_type="user_login")
+    pass
+
 
 security = HTTPBearer()
