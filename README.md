@@ -296,27 +296,26 @@ FileUploadService/
 - **Analytics Dashboard API** (`feature/analytics-dashboard`)
 
   1. **Data Collection**:
-    - Tracks events like file uploads and downloads.
-    - Logs user activity, such as login times and actions performed.
+    - Tracks events like file uploads and downloads. [`Done`]
+    - Logs user activity, such as login times and actions performed. [`Done`]
 
   2. **Data Aggregation**:
     - Aggregates data to show:
-      - Total files uploaded per user.
-      - Most active users in a team or organization.
-      - Storage usage trends over time.
+      - Total files and Storage usage uploaded per user. [`Done`]
+      - Storage usage trends over time. [`Done(kind of)`]
 
   3. **Data Serving**:
     - Provides APIs to retrieve:
-      - Daily/weekly/monthly upload statistics.
-      - Top users by activity.
-      - File types consuming the most storage.
+      - Daily/weekly/monthly upload statistics. [`Done`]
+      - Top users of storage usage. [`Done`]
+      - File types consuming the most storage.  [`Done`]
 
   4. **Caching**:
     - Frequently requested stats (e.g., total storage usage) are cached for quick access.
 
-  5. **For Users**: A user can view their personal activity, such as the number of files uploaded or shared in the past month.
+  5. **For Users**: A user can view their personal activity, such as the number of files uploaded or shared in the past month. [`Done`]
 
-  6. **For Admins**: An admin can monitor team activity, identify inactive users, and optimize storage usage.
+  6. **For Admins**: An admin can monitor, identify inactive users, and optimize storage usage. [`Done`]
 
 
 - **API Gateway** (`feature/api-gateway`)

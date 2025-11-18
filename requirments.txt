@@ -9,6 +9,7 @@ python-dotenv
 pydantic-settings
 
 
+
 passlib[bcrypt]
 
 # TODO: Add python-magic for file type detection
