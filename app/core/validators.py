@@ -11,9 +11,9 @@ from app.core.config import settings
 
 def sanitize_filename(filename: str) -> str:
     """
-    TODO: Sanitize filename to prevent security attacks
+    Sanitize filename to prevent security attacks
     
-    Why we need this:
+    Why:
     1. Directory Traversal Attack: A user could upload "../../etc/passwd" to access system files
     2. Special Characters: Characters like \, /, :, *, ?, ", <, >, | can break file systems
     3. Long Names: Very long filenames can cause errors or buffer overflows
@@ -23,14 +23,14 @@ def sanitize_filename(filename: str) -> str:
     - Replaces dangerous characters with underscores
     - Limits filename length to filesystem maximum (255 characters)
     
-    Example: "../../virus.exe" becomes "_.._.._.._virus.exe" and is then caught by extension check
+    Example: 
+    - "../../virus.exe" becomes "_.._.._.._virus.exe" and is then caught by extension check
     """
-    # TODO: Remove path components to prevent directory traversal
+    # Remove path components to prevent directory traversal
     # os.path.basename extracts just the filename from a full path
-    # Example: "../../etc/passwd" becomes "passwd"
     filename = os.path.basename(filename)
     
-    # TODO: Remove or replace dangerous characters using regex
+    # Remove or replace dangerous characters using regex
     # \w = letters, numbers, underscore
     # \s = whitespace
     # \- = hyphen
@@ -38,14 +38,14 @@ def sanitize_filename(filename: str) -> str:
     # Anything NOT in this set gets replaced with _
     filename = re.sub(r'[^\w\s\-\.]', '_', filename)
     
-    # TODO: Prevent double extension attacks
-    # Attack: "malware.exe.jpg" might get executed as .exe on some systems
+    # Prevent double extension attacks
+    # Attack: "malware.exe.jpg" might get executed as .exe 
     # We keep only the LAST extension, replace other dots with underscores
     name, ext = os.path.splitext(filename)
     name = name.replace('.', '_')
     filename = f"{name}{ext}"
     
-    # TODO: Limit filename length to prevent filesystem errors
+    # Limit filename length to prevent filesystem errors
     # Most filesystems have a 255 character limit for filenames
     if len(filename) > 255:
         name, ext = os.path.splitext(filename)
@@ -55,21 +55,19 @@ def sanitize_filename(filename: str) -> str:
 
 def validate_file_extension(filename: str) -> str:
     """
-    TODO: Validate file extension against allowed/blocked lists
+    Validate file extension against allowed/blocked lists
     
-    This implements "Defense in Depth" - multiple layers of security:
+    Steps:
     1. Check if file has an extension (reject files without extensions)
     2. Check against BLOCKED list (explicit deny of dangerous files)
     3. Check against ALLOWED list (explicit allow of safe files)
     
     Returns the extension if valid, raises HTTPException if invalid
     """
-    # TODO: Extract extension from filename
-    # rsplit('.', 1) splits from the right, max 1 split
-    # Example: "document.backup.pdf" -> ["document.backup", "pdf"]
+    # Extract extension from filename
     ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
     
-    # TODO: Reject files without extensions
+    # Reject files without extensions
     # Files without extensions are suspicious and hard to validate
     if not ext:
         raise HTTPException(
@@ -77,15 +75,14 @@ def validate_file_extension(filename: str) -> str:
             detail="File must have an extension"
         )
     
-    # TODO: Check against blocked extensions (highest priority)
-    # If someone accidentally adds "exe" to ALLOWED_EXTENSIONS, this catches it
+    # Check against blocked extensions
     if ext in settings.BLOCKED_EXTENSIONS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"File type '.{ext}' is not allowed for security reasons"
         )
     
-    # TODO: Check against allowed extensions (whitelist approach)
+    # Check against allowed extensions
     # Only explicitly allowed file types can be uploaded
     if ext not in settings.ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -97,26 +94,21 @@ def validate_file_extension(filename: str) -> str:
 
 def validate_file_size(file: UploadFile) -> None:
     """
-    TODO: Validate file size doesn't exceed maximum allowed
-    
-    Why this matters:
-    1. Disk Space: Prevents users from filling up your entire hard drive
-    2. DoS Attack: Attackers could upload huge files to crash your server
-    3. Cost: If using cloud storage (S3, Azure), large files = expensive
-    4. Performance: Large files slow down your application
+    Validate file size doesn't exceed maximum allowed
     
     How it works:
     - seek(0, 2) moves the file pointer to the end (2 = end of file)
     - tell() returns current position = file size in bytes
     - seek(0) resets pointer to beginning so file can be read normally
+    - Compares size against MAX_FILE_SIZE from settings
     """
-    # TODO: Check file size using seek/tell method
+    # Check file size using seek/tell method
     # This works with file-like objects without reading entire file into memory
     file.file.seek(0, 2)  # Move to end of file
     file_size = file.file.tell()  # Get current position (= file size)
     file.file.seek(0)  # Reset to beginning for later reading
     
-    # TODO: Compare against maximum and raise error if too large
+    # Compare against maximum and raise error if too large
     if file_size > settings.MAX_FILE_SIZE:
         max_mb = settings.MAX_FILE_SIZE / (1024 * 1024)
         actual_mb = file_size / (1024 * 1024)
@@ -232,45 +224,45 @@ def scan_file_for_viruses(file_path: str) -> None:
     Note: This is optional. If ClamAV isn't installed, scanning is skipped.
     In production, you might want to make this mandatory.
     """
-    try:
-        # TODO: Import clamd library (only if available)
-        import clamd
+    # try:
+    #     # TODO: Import clamd library (only if available)
+    #     import clamd
         
-        # TODO: Connect to ClamAV daemon
-        # ClamdUnixSocket() for Linux/Mac
-        # ClamdNetworkSocket() for Windows or remote ClamAV
-        cd = clamd.ClamdUnixSocket()
+    #     # TODO: Connect to ClamAV daemon
+    #     # ClamdUnixSocket() for Linux/Mac
+    #     # ClamdNetworkSocket() for Windows or remote ClamAV
+    #     cd = clamd.ClamdUnixSocket()
         
-        # TODO: Scan the file
-        # Returns dict like: {'/path/to/file': ('FOUND', 'Trojan.Generic')}
-        # Or: {'/path/to/file': ('OK', None)}
-        scan_result = cd.scan(file_path)
+    #     # TODO: Scan the file
+    #     # Returns dict like: {'/path/to/file': ('FOUND', 'Trojan.Generic')}
+    #     # Or: {'/path/to/file': ('OK', None)}
+    #     scan_result = cd.scan(file_path)
         
-        # TODO: Check if virus was found
-        if scan_result and file_path in scan_result:
-            status_type, virus_name = scan_result[file_path]
-            if status_type == 'FOUND':
-                # TODO: Delete infected file immediately
-                if os.path.exists(file_path):
-                    os.remove(file_path)
+    #     # TODO: Check if virus was found
+    #     if scan_result and file_path in scan_result:
+    #         status_type, virus_name = scan_result[file_path]
+    #         if status_type == 'FOUND':
+    #             # TODO: Delete infected file immediately
+    #             if os.path.exists(file_path):
+    #                 os.remove(file_path)
                 
-                # TODO: Reject upload with virus information
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"File rejected: malware detected ({virus_name})"
-                )
-    except ImportError:
-        # TODO: Handle case where clamd library isn't installed
-        # This means virus scanning is disabled
-        # In production, you might want to:
-        # 1. Log a warning that scanning is disabled
-        # 2. Or raise an error to force virus scanning setup
-        pass
-    except Exception as e:
-        # TODO: Handle ClamAV not running or other errors
-        # Options:
-        # 1. Fail-safe: Reject file if can't scan (most secure)
-        # 2. Fail-open: Allow file if can't scan (more user-friendly but less secure)
-        # Currently using fail-open approach
-        # In production, log this error and consider failing-safe
-        pass
+    #             # TODO: Reject upload with virus information
+    #             raise HTTPException(
+    #                 status_code=status.HTTP_400_BAD_REQUEST,
+    #                 detail=f"File rejected: malware detected ({virus_name})"
+    #             )
+    # except ImportError:
+    #     # TODO: Handle case where clamd library isn't installed
+    #     # This means virus scanning is disabled
+    #     # In production, you might want to:
+    #     # 1. Log a warning that scanning is disabled
+    #     # 2. Or raise an error to force virus scanning setup
+    #     pass
+    # except Exception as e:
+    #     # TODO: Handle ClamAV not running or other errors
+    #     # Options:
+    #     # 1. Fail-safe: Reject file if can't scan (most secure)
+    #     # 2. Fail-open: Allow file if can't scan (more user-friendly but less secure)
+    #     # Currently using fail-open approach
+    #     # In production, log this error and consider failing-safe
+    #     pass

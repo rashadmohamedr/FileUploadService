@@ -8,10 +8,7 @@ Pillow
 python-dotenv
 pydantic-settings
 
-# TODO: Add passlib for password hashing
-# - Used in app/core/security.py
-# - [bcrypt] installs bcrypt hashing algorithm (most secure)
-# - Alternatives: argon2, scrypt
+
 passlib[bcrypt]
 
 # TODO: Add python-magic for file type detection

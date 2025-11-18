@@ -247,7 +247,7 @@ FileUploadService/
 - Basic file upload/download/delete functionality
 
 ### 🔄 In Progress (Current Sprint) (`feature/file-security-validation`)
-- **File Security & Validation**
+- **File Security & Validation** <--
   - File size limits and validation
   - File type/extension whitelisting and blacklisting
   - Filename sanitization (prevent directory traversal)

@@ -8,7 +8,8 @@ class File(Base):
     __tablename__ = "Files"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    saved_name = Column(String, unique=True, nullable=False)
+    uploaded_name = Column(String,  nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     content_type = Column(String,nullable=True)
     path  = Column(String, unique=True, nullable=False)
