@@ -245,20 +245,20 @@ FileUploadService/
 - Database models with proper foreign key relationships
 - Schema consistency (snake_case naming)
 - Basic file upload/download/delete functionality
+- File size limits and validation
+- File type/extension whitelisting and blacklisting
+- Filename sanitization (prevent directory traversal)
 
 ### 🔄 In Progress (Current Sprint) (`feature/file-security-validation`)
 - **File Security & Validation** <--
-  - File size limits and validation
-  - File type/extension whitelisting and blacklisting
-  - Filename sanitization (prevent directory traversal)
   - Magic number validation (content type verification)
   - Optional virus scanning with ClamAV integration
   - Enhanced ownership checks in all endpoints
 
 ### 📋 Planned Features
 
-#### High Priority (`feature/enhanced-error-handling`)
-- **New Features**
+#### High Priority 
+- **enhanced-error-handling** (`feature/enhanced-error-handling`)
   - Replace generic exception handlers with specific error types
   - Add structured logging (JSON format)
   - Request ID tracking for debugging
@@ -291,18 +291,65 @@ FileUploadService/
   - Email verification for new accounts
   - Account deletion (with cascading file cleanup)
 
-#### New Features
+#### New Major Features
 
 - **Analytics Dashboard API** (`feature/analytics-dashboard`)
-  - Receive data from clients
-  - Store it in PostgreSQL
-  - Serve aggregated stats with caching (Redis)
-  - Tests with pytest
+
+  1. **Data Collection**:
+    - Tracks events like file uploads, downloads, edits, and shares.
+    - Logs user activity, such as login times and actions performed.
+
+  2. **Data Aggregation**:
+    - Aggregates data to show:
+      - Total files uploaded per user.
+      - Most active users in a team or organization.
+      - Storage usage trends over time.
+
+  3. **Data Serving**:
+    - Provides APIs to retrieve:
+      - Daily/weekly/monthly upload statistics.
+      - Top users by activity.
+      - File types consuming the most storage.
+
+  4. **Caching**:
+    - Frequently requested stats (e.g., total storage usage) are cached for quick access.
+
+  5. **For Users**: A user can view their personal activity, such as the number of files uploaded or shared in the past month.
+
+  6. **For Admins**: An admin can monitor team activity, identify inactive users, and optimize storage usage.
+
 
 - **API Gateway** (`feature/api-gateway`)
   - Combine multiple microservices (auth, payments, file logic)
   - Implement rate limiting
   - API key management for external clients
+  1. **Install Dependencies**:
+   - Add `slowapi` for rate limiting:
+
+  2. **Rate Limiting**:
+    - Create `app/core/limiter.py` to configure `slowapi`.
+    - Register `SlowAPIMiddleware` and exception handlers in `main.py`.
+    - Apply rate limits globally and per endpoint.
+
+  3. **API Key Management**:
+    - Create `ApiKey` model in `app/models/api_key.py`.
+    - Add Pydantic schemas in `app/schemas/api_key.py`.
+    - Implement API key generation and validation logic in `app/services/api_key_service.py`.
+    - Add endpoints for managing API keys in `app/routers/api_key_router.py`.
+
+  4. **Centralized Routing**:
+    - Refactor `main.py` to include versioned routers:
+      - `/api/v1/auth`
+      - `/api/v1/files`
+      - `/api/v1/keys`
+    - Add a health check endpoint.
+
+  5. **Security Enhancements**:
+    - Add a dependency to validate API keys in `app/dependencies.py`.
+    - Ensure API keys are hashed in the database and only shown once upon creation.
+
+  6. **Database Migration**:
+    - Generate and apply Alembic migrations for the `ApiKey` model.
 
 ### 🔧 Planned Code Fixes
 
