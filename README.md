@@ -258,11 +258,9 @@ FileUploadService/
 ### 📋 Planned Features
 
 #### High Priority (`feature/enhanced-error-handling`)
-- **Enhanced Error Handling & Logging**
+- **New Features**
   - Replace generic exception handlers with specific error types
   - Add structured logging (JSON format)
-  - Implement proper database rollback mechanisms
-  - Consistent error response formats across all endpoints
   - Request ID tracking for debugging
 
 - **Production-Ready Features** (`feature/production-ready`)
@@ -271,15 +269,6 @@ FileUploadService/
   - Health check endpoint (`/health`)
   - API versioning (e.g., `/api/v1/`)
   - Request rate limiting (prevent abuse)
-  - Database migrations with Alembic
-  - Fix `requirments.txt` → `requirements.txt` typo
-
-- **Docker & Deployment Improvements** (`feature/docker-deployment`)
-  - Add PostgreSQL to `docker-compose.yaml`
-  - Multi-stage Docker builds (smaller images)
-  - Container health checks
-  - Volume persistence for database and uploads
-  - Environment-specific configurations (dev/staging/prod)
 
 #### Medium Priority (`feature/testing-and-docs`)
 - **Testing & Documentation**
@@ -314,6 +303,24 @@ FileUploadService/
   - Combine multiple microservices (auth, payments, file logic)
   - Implement rate limiting
   - API key management for external clients
+
+### 🔧 Planned Code Fixes
+
+#### High Priority (`feature/enhanced-error-handling`)
+- **Code Fixes**
+  - Implement proper database rollback mechanisms
+  - Consistent error response formats across all endpoints
+
+- **Production-Ready Fixes** (`feature/production-ready`)
+  - Fix `requirments.txt` → `requirements.txt` typo
+  - Database migrations with Alembic
+
+- **Docker & Deployment Improvements** (`feature/docker-deployment`)
+  - Add PostgreSQL to `docker-compose.yaml`
+  - Multi-stage Docker builds (smaller images)
+  - Container health checks
+  - Volume persistence for database and uploads
+  - Environment-specific configurations (dev/staging/prod)
 
 ### Future Enhancements
 
