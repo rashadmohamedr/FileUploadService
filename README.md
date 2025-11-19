@@ -238,16 +238,16 @@ FileUploadService/
 ## 🚧 Roadmap
 
 ### ✅ Completed Features (`main`)
-- User registration and authentication
-- JWT token generation and validation
-- Protected file routes with authentication middleware
-- User ownership verification for file operations
-- Database models with proper foreign key relationships
-- Schema consistency (snake_case naming)
-- Basic file upload/download/delete functionality
-- File size limits and validation
-- File type/extension whitelisting and blacklisting
-- Filename sanitization (prevent directory traversal)
+ - User Authentication: Full registration and login flow with JWT.
+ - File Management: Protected CRUD operations for user files.
+ - Database & Schemas: Relational data model with validation.
+ - Security Basics: Ownership checks, password hashing, filename sanitization.
+ - Analytics Dashboard API:
+    - Data Collection: Tracks file operations and user logins.
+    - Data Aggregation: Calculates user storage and system-wide trends.
+    - Data Serving: Provides API endpoints for user and admin analytics.
+    - User View: /analytics/me endpoint for personal stats.
+    - Admin View: Protected /analytics/admin/* endpoints for system monitoring.
 
 ### 🔄 In Progress (Current Sprint) (`feature/file-security-validation`)
 - **File Security & Validation** <--
@@ -278,13 +278,6 @@ FileUploadService/
   - Enhanced OpenAPI documentation with examples
   - Postman/Insomnia collection
 
-- **Admin Dashboard** (`feature/admin-dashboard`)
-  - User management (list, disable, delete users)
-  - File analytics (storage usage, upload trends)
-  - Storage metrics and monitoring
-  - Role-based access control (RBAC)
-  - Audit logging
-
 - **User Features** (`feature/user-features`)
   - User profile management endpoints
   - Password reset functionality
@@ -295,27 +288,9 @@ FileUploadService/
 
 - **Analytics Dashboard API** (`feature/analytics-dashboard`)
 
-  1. **Data Collection**:
-    - Tracks events like file uploads and downloads. [`Done`]
-    - Logs user activity, such as login times and actions performed. [`Done`]
-
-  2. **Data Aggregation**:
-    - Aggregates data to show:
-      - Total files and Storage usage uploaded per user. [`Done`]
-      - Storage usage trends over time. [`Done(kind of)`]
-
-  3. **Data Serving**:
-    - Provides APIs to retrieve:
-      - Daily/weekly/monthly upload statistics. [`Done`]
-      - Top users of storage usage. [`Done`]
-      - File types consuming the most storage.  [`Done`]
-
-  4. **Caching**:
+  1. **Caching**:
     - Frequently requested stats (e.g., total storage usage) are cached for quick access.
 
-  5. **For Users**: A user can view their personal activity, such as the number of files uploaded or shared in the past month. [`Done`]
-
-  6. **For Admins**: An admin can monitor, identify inactive users, and optimize storage usage. [`Done`]
 
 
 - **API Gateway** (`feature/api-gateway`)
