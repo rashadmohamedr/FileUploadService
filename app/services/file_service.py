@@ -3,8 +3,10 @@ import shutil
 from fastapi import UploadFile, HTTPException, status
 from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import Integer
+from sqlalchemy import Integer, Float
 from app.models.file import File
+from app.models.user import User
+from app.models.analytics_event import AnalyticsEvent
 from app.core.config import settings
 from app.core.validators import (
     sanitize_filename,
@@ -15,7 +17,46 @@ from app.core.validators import (
 )
 import os
 
+# TODO Storage usage trends over time. and that will be done by the following
+# - add Total storage variable to the main admin model with user.id = 1 [DONE]
+# - at each upload, update the total storage used and log to the timestamp table
+# - at each delete, update the total storage used and log to the timestamp table
+
+# TODO Data Serving:
+#     - Provides APIs to retrieve:
+#       - Daily/weekly/monthly upload statistics. -> by querying the timestamped log table
+#       - Top users of storage usage. -> by adding to the user model total storage usage attribute [DONE]
+#       - File types consuming the most storage. -> by adding to the main admin model a list of file types and their total storage usage
+
 UPLOAD_DIR = settings.UPLOAD_DIR
+
+def update_total_storage_used_incrementally(db: Session, user_id: int,another_storage_used:float):
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    user.total_storage_used +=another_storage_used # type: ignore
+    db.commit()
+    db.refresh(user)
+
+def update_total_storage_used_decrementally(db: Session, user_id: int,another_storage_used:float):
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    user.total_storage_used +=another_storage_used # type: ignore
+    db.commit()
+    db.refresh(user)
+    
+def update_total_storage_used_incrementally_for_theGodFather(db: Session,another_storage_used:float, user_id:int = 1):
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    user.total_storage_used +=another_storage_used # type: ignore
+    db.commit()
+    db.refresh(user)
+
+def update_total_storage_used_decrementally_for_theGodFather(db: Session,another_storage_used:float, user_id:int = 1):
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    user.total_storage_used +=another_storage_used # type: ignore
+    db.commit()
+    db.refresh(user)
 
 def save_upload(db: Session, upload_file: UploadFile, owner_id: int):
     """
@@ -42,7 +83,7 @@ def save_upload(db: Session, upload_file: UploadFile, owner_id: int):
         )
     
     # Validate file size BEFORE saving to disk
-    validate_file_size(upload_file)
+    file_size=validate_file_size(upload_file)
     
     # Sanitize filename to remove dangerous characters
     safe_filename = sanitize_filename(upload_file.filename)
@@ -89,12 +130,33 @@ def save_upload(db: Session, upload_file: UploadFile, owner_id: int):
             uploaded_name=safe_filename,
             owner_id=owner_id,
             content_type=upload_file.content_type,
-            path=file_path
+            path=file_path,
+            size=file_size
         )
         db.add(db_file)
         db.commit()
         db.refresh(db_file)
-        return db_file
+        update_total_storage_used_incrementally(db, owner_id, file_size)
+        
+        log_event = AnalyticsEvent(
+            user_id=owner_id,
+            event_type="file_upload",
+            details={
+                "user_id": owner_id,
+                "file_id": None,  # Will be populated after commit
+                "original_name": db_file.saved_name,
+                "change_in_MB": file_size,
+            },
+        )
+        db.add(log_event)
+        db.commit()
+        db.refresh(log_event)
+        
+        return JSONResponse(content={"id": db_file.id, 
+                                     "filename": db_file.uploaded_name, 
+                                     "content_type": db_file.content_type, 
+                                     "size": db_file.size, 
+                                     "message": "File uploaded successfully"})
         
     except HTTPException:
         db.rollback()
@@ -156,6 +218,21 @@ def delete_file(db: Session, file_id: int, owner_id: int)-> JSONResponse:
         # Delete database record
         db.delete(db_file)
         db.commit()
+        update_total_storage_used_decrementally(db, owner_id, db_file.size.casted(Float) if db_file.size is not None else 0.0)
+        log_event = AnalyticsEvent(
+            user_id=owner_id,
+            event_type="file_deleted",
+            details={
+                "user_id": owner_id,
+                "file_id": None,  # Will be populated after commit
+                "original_name": db_file.filename,
+                "change_in_MB": -db_file.size.casted(Float) if db_file.size is not None else 0.0,
+            },
+        )
+        db.add(log_event)
+        db.commit()
+        db.refresh(log_event)
+        
     except Exception as e:
         # TODO: In production, log this error for investigation
         # Example logging (not implemented yet):
@@ -203,8 +280,23 @@ def download_file(db: Session, file_id: int, owner_id: int) -> FileResponse:
     
     # Return file to user
     # FileResponse handles streaming, headers, and proper download behavior
-    return FileResponse(
+    response = FileResponse(
         path=str(db_file.path),
         filename=str(db_file.uploaded_name),  # Original filename user uploaded
         media_type=str(db_file.content_type) if db_file.content_type is not None else None
     )
+    
+    log_event = AnalyticsEvent(
+        user_id=owner_id,
+        event_type="file_downloaded",
+        details={
+            "user_id": owner_id,
+            "file_id": db_file.id,
+            "original_name": db_file.saved_name,
+            "change_in_bytes": None,
+        },
+    )
+    db.add(log_event)
+    db.commit()
+    db.refresh(log_event)
+    return response

@@ -5,7 +5,7 @@ import re
 # - This tells you the TRUE file type, not just what the extension claims
 # - For example: someone could rename virus.exe to photo.jpg, but magic will detect it's an executable
 # - Install: pip install python-magic python-magic-bin (on Windows)
-import magic
+# import magic
 from fastapi import UploadFile, HTTPException, status
 from app.core.config import settings
 
@@ -92,7 +92,7 @@ def validate_file_extension(filename: str) -> str:
     
     return ext
 
-def validate_file_size(file: UploadFile) -> None:
+def validate_file_size(file: UploadFile) -> float:
     """
     Validate file size doesn't exceed maximum allowed
     
@@ -116,82 +116,83 @@ def validate_file_size(file: UploadFile) -> None:
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail=f"File size ({actual_mb:.2f}MB) exceeds maximum allowed size ({max_mb:.2f}MB)"
         )
+    return file_size / (1024 * 1024)
 
-def validate_file_content(file_path: str, expected_ext: str) -> None:
-    """
-    TODO: Validate file content matches its extension using magic numbers
+# def validate_file_content(file_path: str, expected_ext: str) -> None:
+#     """
+#     TODO: Validate file content matches its extension using magic numbers
     
-    IMPORTANT SECURITY CONCEPT - "Magic Numbers":
-    - Every file type has a unique signature in its first few bytes
-    - PDF files start with "%PDF"
-    - JPEG files start with "FF D8 FF"
-    - PNG files start with "89 50 4E 47"
-    - ZIP files start with "50 4B"
+#     IMPORTANT SECURITY CONCEPT - "Magic Numbers":
+#     - Every file type has a unique signature in its first few bytes
+#     - PDF files start with "%PDF"
+#     - JPEG files start with "FF D8 FF"
+#     - PNG files start with "89 50 4E 47"
+#     - ZIP files start with "50 4B"
     
-    Why we need this:
-    - A user could rename "virus.exe" to "photo.jpg"
-    - Extension check would pass, but the file is still dangerous
-    - Magic number check reads the actual file content to detect the real type
+#     Why we need this:
+#     - A user could rename "virus.exe" to "photo.jpg"
+#     - Extension check would pass, but the file is still dangerous
+#     - Magic number check reads the actual file content to detect the real type
     
-    Example Attack Prevented:
-    - Attacker uploads "malware.exe" renamed as "document.pdf"
-    - Extension check: passes (pdf is allowed)
-    - Magic number check: FAILS (file is actually exe, not pdf)
+#     Example Attack Prevented:
+#     - Attacker uploads "malware.exe" renamed as "document.pdf"
+#     - Extension check: passes (pdf is allowed)
+#     - Magic number check: FAILS (file is actually exe, not pdf)
     
-    Note: This requires python-magic library
-    - On Linux: pip install python-magic
-    - On Windows: pip install python-magic python-magic-bin
-    """
-    try:
-        # TODO: Use python-magic to detect actual file type
-        # magic.Magic(mime=True) creates a magic detector that returns MIME types
-        # MIME type = standardized way to identify file types (e.g., "image/jpeg", "application/pdf")
-        mime = magic.Magic(mime=True)
-        detected_mime = mime.from_file(file_path)
+#     Note: This requires python-magic library
+#     - On Linux: pip install python-magic
+#     - On Windows: pip install python-magic python-magic-bin
+#     """
+#     try:
+#         # TODO: Use python-magic to detect actual file type
+#         # magic.Magic(mime=True) creates a magic detector that returns MIME types
+#         # MIME type = standardized way to identify file types (e.g., "image/jpeg", "application/pdf")
+#         mime = magic.Magic(mime=True)
+#         detected_mime = mime.from_file(file_path)
         
-        # TODO: Define mapping of extensions to acceptable MIME types
-        # Some files can have multiple valid MIME types (e.g., CSV can be text/csv or text/plain)
-        mime_mapping = {
-            'pdf': ['application/pdf'],
-            'doc': ['application/msword'],
-            'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-            'xls': ['application/vnd.ms-excel'],
-            'xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-            'jpg': ['image/jpeg'],
-            'jpeg': ['image/jpeg'],
-            'png': ['image/png'],
-            'gif': ['image/gif'],
-            'txt': ['text/plain'],
-            'csv': ['text/csv', 'text/plain'],
-            'json': ['application/json', 'text/plain'],
-            'zip': ['application/zip'],
-            'mp4': ['video/mp4'],
-            'mp3': ['audio/mpeg'],
-            # TODO: Add more mappings for other file types you allow
-        }
+#         # TODO: Define mapping of extensions to acceptable MIME types
+#         # Some files can have multiple valid MIME types (e.g., CSV can be text/csv or text/plain)
+#         mime_mapping = {
+#             'pdf': ['application/pdf'],
+#             'doc': ['application/msword'],
+#             'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+#             'xls': ['application/vnd.ms-excel'],
+#             'xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+#             'jpg': ['image/jpeg'],
+#             'jpeg': ['image/jpeg'],
+#             'png': ['image/png'],
+#             'gif': ['image/gif'],
+#             'txt': ['text/plain'],
+#             'csv': ['text/csv', 'text/plain'],
+#             'json': ['application/json', 'text/plain'],
+#             'zip': ['application/zip'],
+#             'mp4': ['video/mp4'],
+#             'mp3': ['audio/mpeg'],
+#             # TODO: Add more mappings for other file types you allow
+#         }
         
-        # TODO: Get list of acceptable MIME types for this extension
-        allowed_mimes = mime_mapping.get(expected_ext.lower(), [])
+#         # TODO: Get list of acceptable MIME types for this extension
+#         allowed_mimes = mime_mapping.get(expected_ext.lower(), [])
         
-        # TODO: If we have MIME types defined and file doesn't match, reject it
-        # If extension isn't in mapping, we skip this check (not ideal, but safe)
-        if allowed_mimes and detected_mime not in allowed_mimes:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"File content type ({detected_mime}) doesn't match extension (.{expected_ext})"
-            )
-    except ImportError:
-        # TODO: Handle case where python-magic isn't installed
-        # In production, you should log this warning
-        # Consider making this check mandatory by raising error if library not found
-        pass
-    except HTTPException:
-        # Re-raise our validation errors
-        raise
-    except Exception as e:
-        # TODO: Handle other errors (file not found, permission issues, etc.)
-        # In production, log this error for debugging
-        pass
+#         # TODO: If we have MIME types defined and file doesn't match, reject it
+#         # If extension isn't in mapping, we skip this check (not ideal, but safe)
+#         if allowed_mimes and detected_mime not in allowed_mimes:
+#             raise HTTPException(
+#                 status_code=status.HTTP_400_BAD_REQUEST,
+#                 detail=f"File content type ({detected_mime}) doesn't match extension (.{expected_ext})"
+#             )
+#     except ImportError:
+#         # TODO: Handle case where python-magic isn't installed
+#         # In production, you should log this warning
+#         # Consider making this check mandatory by raising error if library not found
+#         pass
+#     except HTTPException:
+#         # Re-raise our validation errors
+#         raise
+#     except Exception as e:
+#         # TODO: Handle other errors (file not found, permission issues, etc.)
+#         # In production, log this error for debugging
+#         pass
 
 def scan_file_for_viruses(file_path: str) -> None:
     """
