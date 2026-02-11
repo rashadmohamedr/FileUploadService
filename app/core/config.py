@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     # ALLOWED_EXTENSIONS - Whitelist of safe file extensions
     ALLOWED_EXTENSIONS: set = {
         "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",  # Documents
-        "txt", "csv", "json", "xml",                          # Text files
+        "txt", "csv", "json", "xml", "md",                    # Text files
         "jpg", "jpeg", "png", "gif", "bmp", "webp",          # Images
         "mp4", "avi", "mov", "wmv",                          # Videos
         "mp3", "wav", "ogg",                                 # Audio
