@@ -1,0 +1,36 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+pydantic[email]
+python-multipart
+Pillow
+python-dotenv
+pydantic-settings
+rich
+
+passlib
+bcrypt==3.2.0
+python-jose
+# JWT token dependencies
+python-jose[cryptography]
+python-multipart
+
+# File type detection and security
+python-magic
+python-magic-bin; sys_platform == 'win32'
+
+# OPTIONAL - Add clamd for virus scanning
+# - Requires ClamAV to be installed on your system
+# - See app/core/validators.py for setup instructions
+# - Comment out if you don't want virus scanning
+# clamd
+
+# Testing dependencies
+pytest
+pytest-asyncio
+pytest-cov
+httpx
+faker
+textual
+requests

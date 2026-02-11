@@ -238,27 +238,27 @@ FileUploadService/
 ## 🚧 Roadmap
 
 ### ✅ Completed Features (`main`)
-- User registration and authentication
-- JWT token generation and validation
-- Protected file routes with authentication middleware
-- User ownership verification for file operations
-- Database models with proper foreign key relationships
-- Schema consistency (snake_case naming)
-- Basic file upload/download/delete functionality
+ - User Authentication: Full registration and login flow with JWT.
+ - File Management: Protected CRUD operations for user files.
+ - Database & Schemas: Relational data model with validation.
+ - Security Basics: Ownership checks, password hashing, filename sanitization.
+ - Analytics Dashboard API:
+    - Data Collection: Tracks file operations and user logins.
+    - Data Aggregation: Calculates user storage and system-wide trends.
+    - Data Serving: Provides API endpoints for user and admin analytics.
+    - User View: /analytics/me endpoint for personal stats.
+    - Admin View: Protected /analytics/admin/* endpoints for system monitoring.
 
 ### 🔄 In Progress (Current Sprint) (`feature/file-security-validation`)
-- **File Security & Validation**
-  - File size limits and validation
-  - File type/extension whitelisting and blacklisting
-  - Filename sanitization (prevent directory traversal)
+- **File Security & Validation** <--
   - Magic number validation (content type verification)
   - Optional virus scanning with ClamAV integration
   - Enhanced ownership checks in all endpoints
 
 ### 📋 Planned Features
 
-#### High Priority (`feature/enhanced-error-handling`)
-- **New Features**
+#### High Priority 
+- **enhanced-error-handling** (`feature/enhanced-error-handling`)
   - Replace generic exception handlers with specific error types
   - Add structured logging (JSON format)
   - Request ID tracking for debugging
@@ -278,31 +278,52 @@ FileUploadService/
   - Enhanced OpenAPI documentation with examples
   - Postman/Insomnia collection
 
-- **Admin Dashboard** (`feature/admin-dashboard`)
-  - User management (list, disable, delete users)
-  - File analytics (storage usage, upload trends)
-  - Storage metrics and monitoring
-  - Role-based access control (RBAC)
-  - Audit logging
-
 - **User Features** (`feature/user-features`)
   - User profile management endpoints
   - Password reset functionality
   - Email verification for new accounts
   - Account deletion (with cascading file cleanup)
 
-#### New Features
+#### New Major Features
 
 - **Analytics Dashboard API** (`feature/analytics-dashboard`)
-  - Receive data from clients
-  - Store it in PostgreSQL
-  - Serve aggregated stats with caching (Redis)
-  - Tests with pytest
+
+  1. **Caching**:
+    - Frequently requested stats (e.g., total storage usage) are cached for quick access.
+
+
 
 - **API Gateway** (`feature/api-gateway`)
   - Combine multiple microservices (auth, payments, file logic)
   - Implement rate limiting
   - API key management for external clients
+  1. **Install Dependencies**:
+   - Add `slowapi` for rate limiting:
+
+  2. **Rate Limiting**:
+    - Create `app/core/limiter.py` to configure `slowapi`.
+    - Register `SlowAPIMiddleware` and exception handlers in `main.py`.
+    - Apply rate limits globally and per endpoint.
+
+  3. **API Key Management**:
+    - Create `ApiKey` model in `app/models/api_key.py`.
+    - Add Pydantic schemas in `app/schemas/api_key.py`.
+    - Implement API key generation and validation logic in `app/services/api_key_service.py`.
+    - Add endpoints for managing API keys in `app/routers/api_key_router.py`.
+
+  4. **Centralized Routing**:
+    - Refactor `main.py` to include versioned routers:
+      - `/api/v1/auth`
+      - `/api/v1/files`
+      - `/api/v1/keys`
+    - Add a health check endpoint.
+
+  5. **Security Enhancements**:
+    - Add a dependency to validate API keys in `app/dependencies.py`.
+    - Ensure API keys are hashed in the database and only shown once upon creation.
+
+  6. **Database Migration**:
+    - Generate and apply Alembic migrations for the `ApiKey` model.
 
 ### 🔧 Planned Code Fixes
 

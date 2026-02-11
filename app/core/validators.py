@@ -1,19 +1,22 @@
 import os
 import re
-# TODO: Learn about python-magic library
-# - python-magic reads the first few bytes of a file (called "magic numbers" or file signature)
-# - This tells you the TRUE file type, not just what the extension claims
-# - For example: someone could rename virus.exe to photo.jpg, but magic will detect it's an executable
-# - Install: pip install python-magic python-magic-bin (on Windows)
-import magic
 from fastapi import UploadFile, HTTPException, status
 from app.core.config import settings
 
+# Import python-magic for file content validation
+try:
+    import magic
+    MAGIC_AVAILABLE = True
+except ImportError:
+    MAGIC_AVAILABLE = False
+    # Production systems should have python-magic installed
+    # Install with: pip install python-magic python-magic-bin (on Windows)
+
 def sanitize_filename(filename: str) -> str:
     """
-    TODO: Sanitize filename to prevent security attacks
+    Sanitize filename to prevent security attacks
     
-    Why we need this:
+    Why:
     1. Directory Traversal Attack: A user could upload "../../etc/passwd" to access system files
     2. Special Characters: Characters like \, /, :, *, ?, ", <, >, | can break file systems
     3. Long Names: Very long filenames can cause errors or buffer overflows
@@ -23,14 +26,14 @@ def sanitize_filename(filename: str) -> str:
     - Replaces dangerous characters with underscores
     - Limits filename length to filesystem maximum (255 characters)
     
-    Example: "../../virus.exe" becomes "_.._.._.._virus.exe" and is then caught by extension check
+    Example: 
+    - "../../virus.exe" becomes "_.._.._.._virus.exe" and is then caught by extension check
     """
-    # TODO: Remove path components to prevent directory traversal
+    # Remove path components to prevent directory traversal
     # os.path.basename extracts just the filename from a full path
-    # Example: "../../etc/passwd" becomes "passwd"
     filename = os.path.basename(filename)
     
-    # TODO: Remove or replace dangerous characters using regex
+    # Remove or replace dangerous characters using regex
     # \w = letters, numbers, underscore
     # \s = whitespace
     # \- = hyphen
@@ -38,14 +41,14 @@ def sanitize_filename(filename: str) -> str:
     # Anything NOT in this set gets replaced with _
     filename = re.sub(r'[^\w\s\-\.]', '_', filename)
     
-    # TODO: Prevent double extension attacks
-    # Attack: "malware.exe.jpg" might get executed as .exe on some systems
+    # Prevent double extension attacks
+    # Attack: "malware.exe.jpg" might get executed as .exe 
     # We keep only the LAST extension, replace other dots with underscores
     name, ext = os.path.splitext(filename)
     name = name.replace('.', '_')
     filename = f"{name}{ext}"
     
-    # TODO: Limit filename length to prevent filesystem errors
+    # Limit filename length to prevent filesystem errors
     # Most filesystems have a 255 character limit for filenames
     if len(filename) > 255:
         name, ext = os.path.splitext(filename)
@@ -55,21 +58,19 @@ def sanitize_filename(filename: str) -> str:
 
 def validate_file_extension(filename: str) -> str:
     """
-    TODO: Validate file extension against allowed/blocked lists
+    Validate file extension against allowed/blocked lists
     
-    This implements "Defense in Depth" - multiple layers of security:
+    Steps:
     1. Check if file has an extension (reject files without extensions)
     2. Check against BLOCKED list (explicit deny of dangerous files)
     3. Check against ALLOWED list (explicit allow of safe files)
     
     Returns the extension if valid, raises HTTPException if invalid
     """
-    # TODO: Extract extension from filename
-    # rsplit('.', 1) splits from the right, max 1 split
-    # Example: "document.backup.pdf" -> ["document.backup", "pdf"]
+    # Extract extension from filename
     ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
     
-    # TODO: Reject files without extensions
+    # Reject files without extensions
     # Files without extensions are suspicious and hard to validate
     if not ext:
         raise HTTPException(
@@ -77,15 +78,14 @@ def validate_file_extension(filename: str) -> str:
             detail="File must have an extension"
         )
     
-    # TODO: Check against blocked extensions (highest priority)
-    # If someone accidentally adds "exe" to ALLOWED_EXTENSIONS, this catches it
+    # Check against blocked extensions
     if ext in settings.BLOCKED_EXTENSIONS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"File type '.{ext}' is not allowed for security reasons"
         )
     
-    # TODO: Check against allowed extensions (whitelist approach)
+    # Check against allowed extensions
     # Only explicitly allowed file types can be uploaded
     if ext not in settings.ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -95,28 +95,23 @@ def validate_file_extension(filename: str) -> str:
     
     return ext
 
-def validate_file_size(file: UploadFile) -> None:
+def validate_file_size(file: UploadFile) -> float:
     """
-    TODO: Validate file size doesn't exceed maximum allowed
-    
-    Why this matters:
-    1. Disk Space: Prevents users from filling up your entire hard drive
-    2. DoS Attack: Attackers could upload huge files to crash your server
-    3. Cost: If using cloud storage (S3, Azure), large files = expensive
-    4. Performance: Large files slow down your application
+    Validate file size doesn't exceed maximum allowed
     
     How it works:
     - seek(0, 2) moves the file pointer to the end (2 = end of file)
     - tell() returns current position = file size in bytes
     - seek(0) resets pointer to beginning so file can be read normally
+    - Compares size against MAX_FILE_SIZE from settings
     """
-    # TODO: Check file size using seek/tell method
+    # Check file size using seek/tell method
     # This works with file-like objects without reading entire file into memory
     file.file.seek(0, 2)  # Move to end of file
     file_size = file.file.tell()  # Get current position (= file size)
     file.file.seek(0)  # Reset to beginning for later reading
     
-    # TODO: Compare against maximum and raise error if too large
+    # Compare against maximum and raise error if too large
     if file_size > settings.MAX_FILE_SIZE:
         max_mb = settings.MAX_FILE_SIZE / (1024 * 1024)
         actual_mb = file_size / (1024 * 1024)
@@ -124,10 +119,11 @@ def validate_file_size(file: UploadFile) -> None:
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail=f"File size ({actual_mb:.2f}MB) exceeds maximum allowed size ({max_mb:.2f}MB)"
         )
+    return file_size / (1024 * 1024)
 
 def validate_file_content(file_path: str, expected_ext: str) -> None:
     """
-    TODO: Validate file content matches its extension using magic numbers
+    Validate file content matches its extension using magic numbers.
     
     IMPORTANT SECURITY CONCEPT - "Magic Numbers":
     - Every file type has a unique signature in its first few bytes
@@ -145,76 +141,76 @@ def validate_file_content(file_path: str, expected_ext: str) -> None:
     - Attacker uploads "malware.exe" renamed as "document.pdf"
     - Extension check: passes (pdf is allowed)
     - Magic number check: FAILS (file is actually exe, not pdf)
-    
-    Note: This requires python-magic library
-    - On Linux: pip install python-magic
-    - On Windows: pip install python-magic python-magic-bin
     """
+    if not MAGIC_AVAILABLE:
+        # python-magic not installed, skip content validation
+        # In production, consider making this mandatory
+        return
+    
     try:
-        # TODO: Use python-magic to detect actual file type
-        # magic.Magic(mime=True) creates a magic detector that returns MIME types
-        # MIME type = standardized way to identify file types (e.g., "image/jpeg", "application/pdf")
+        # Use python-magic to detect actual file type
         mime = magic.Magic(mime=True)
         detected_mime = mime.from_file(file_path)
         
-        # TODO: Define mapping of extensions to acceptable MIME types
-        # Some files can have multiple valid MIME types (e.g., CSV can be text/csv or text/plain)
+        # Define mapping of extensions to acceptable MIME types
+        # Some files can have multiple valid MIME types
         mime_mapping = {
             'pdf': ['application/pdf'],
             'doc': ['application/msword'],
             'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
             'xls': ['application/vnd.ms-excel'],
             'xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+            'ppt': ['application/vnd.ms-powerpoint'],
+            'pptx': ['application/vnd.openxmlformats-officedocument.presentationml.presentation'],
             'jpg': ['image/jpeg'],
             'jpeg': ['image/jpeg'],
             'png': ['image/png'],
             'gif': ['image/gif'],
+            'bmp': ['image/bmp', 'image/x-ms-bmp'],
+            'webp': ['image/webp'],
             'txt': ['text/plain'],
             'csv': ['text/csv', 'text/plain'],
             'json': ['application/json', 'text/plain'],
-            'zip': ['application/zip'],
+            'xml': ['application/xml', 'text/xml'],
+            'zip': ['application/zip', 'application/x-zip-compressed'],
+            'rar': ['application/x-rar-compressed', 'application/vnd.rar'],
+            '7z': ['application/x-7z-compressed'],
+            'tar': ['application/x-tar'],
+            'gz': ['application/gzip', 'application/x-gzip'],
             'mp4': ['video/mp4'],
+            'avi': ['video/x-msvideo'],
+            'mov': ['video/quicktime'],
+            'wmv': ['video/x-ms-wmv'],
             'mp3': ['audio/mpeg'],
-            # TODO: Add more mappings for other file types you allow
+            'wav': ['audio/wav', 'audio/x-wav'],
+            'ogg': ['audio/ogg'],
         }
         
-        # TODO: Get list of acceptable MIME types for this extension
+        # Get list of acceptable MIME types for this extension
         allowed_mimes = mime_mapping.get(expected_ext.lower(), [])
         
-        # TODO: If we have MIME types defined and file doesn't match, reject it
-        # If extension isn't in mapping, we skip this check (not ideal, but safe)
+        # If we have MIME types defined and file doesn't match, reject it
         if allowed_mimes and detected_mime not in allowed_mimes:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"File content type ({detected_mime}) doesn't match extension (.{expected_ext})"
             )
-    except ImportError:
-        # TODO: Handle case where python-magic isn't installed
-        # In production, you should log this warning
-        # Consider making this check mandatory by raising error if library not found
-        pass
     except HTTPException:
         # Re-raise our validation errors
         raise
     except Exception as e:
-        # TODO: Handle other errors (file not found, permission issues, etc.)
+        # Handle other errors gracefully
         # In production, log this error for debugging
         pass
 
 def scan_file_for_viruses(file_path: str) -> None:
     """
-    TODO: Scan file for viruses using ClamAV antivirus engine
+    Scan file for viruses using ClamAV antivirus engine.
     
     What is ClamAV:
     - Free, open-source antivirus engine
     - Can detect trojans, viruses, malware, and other threats
     - Used by many mail servers and file storage systems
-    
-    How it works:
-    1. ClamAV daemon (clamd) runs in background
-    2. We send file path to clamd using Python client (clamd library)
-    3. ClamAV scans file against virus database
-    4. Returns "OK" if clean, "FOUND" if infected
     
     Setup (optional but recommended for production):
     Windows:
@@ -233,44 +229,38 @@ def scan_file_for_viruses(file_path: str) -> None:
     In production, you might want to make this mandatory.
     """
     try:
-        # TODO: Import clamd library (only if available)
         import clamd
         
-        # TODO: Connect to ClamAV daemon
-        # ClamdUnixSocket() for Linux/Mac
-        # ClamdNetworkSocket() for Windows or remote ClamAV
-        cd = clamd.ClamdUnixSocket()
+        # Connect to ClamAV daemon
+        try:
+            # Try Unix socket first (Linux/Mac)
+            cd = clamd.ClamdUnixSocket()
+        except:
+            # Fallback to network socket (Windows or remote ClamAV)
+            cd = clamd.ClamdNetworkSocket()
         
-        # TODO: Scan the file
-        # Returns dict like: {'/path/to/file': ('FOUND', 'Trojan.Generic')}
-        # Or: {'/path/to/file': ('OK', None)}
+        # Scan the file
         scan_result = cd.scan(file_path)
         
-        # TODO: Check if virus was found
+        # Check if virus was found
         if scan_result and file_path in scan_result:
             status_type, virus_name = scan_result[file_path]
             if status_type == 'FOUND':
-                # TODO: Delete infected file immediately
+                # Delete infected file immediately
                 if os.path.exists(file_path):
                     os.remove(file_path)
                 
-                # TODO: Reject upload with virus information
+                # Reject upload with virus information
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"File rejected: malware detected ({virus_name})"
                 )
     except ImportError:
-        # TODO: Handle case where clamd library isn't installed
-        # This means virus scanning is disabled
-        # In production, you might want to:
-        # 1. Log a warning that scanning is disabled
-        # 2. Or raise an error to force virus scanning setup
+        # clamd library not installed - skip virus scanning
+        # In production, consider making this mandatory
         pass
     except Exception as e:
-        # TODO: Handle ClamAV not running or other errors
-        # Options:
-        # 1. Fail-safe: Reject file if can't scan (most secure)
-        # 2. Fail-open: Allow file if can't scan (more user-friendly but less secure)
-        # Currently using fail-open approach
+        # ClamAV not running or other errors
+        # Currently using fail-open approach (allow file if can't scan)
         # In production, log this error and consider failing-safe
         pass
